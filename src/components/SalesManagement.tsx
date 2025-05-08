@@ -1,11 +1,12 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockProducts, mockStockIn } from "@/data/mockData";
+import { getProducts, getStockIn, getSales, saveSales } from "@/data/mockData";
+import { toast } from "sonner";
 
 const SalesManagement = () => {
   const [sales, setSales] = useState<any[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<any[]>([]);
   const [newSale, setNewSale] = useState({
     productId: 0,
     quantity: 0,
@@ -14,22 +15,35 @@ const SalesManagement = () => {
   });
   const [message, setMessage] = useState({ text: "", type: "" });
 
-  const availableProducts = mockProducts.map(product => {
-    const stockForProduct = mockStockIn.filter(stock => stock.productId === product.id);
-    const totalQuantity = stockForProduct.reduce((sum, item) => sum + item.quantity, 0);
-    const soldQuantity = sales
-      .filter(sale => sale.productId === product.id)
-      .reduce((sum, sale) => sum + sale.quantity, 0);
+  // Load data from localStorage
+  useEffect(() => {
+    const salesData = getSales();
+    setSales(salesData);
     
-    return {
-      ...product,
-      availableQuantity: totalQuantity - soldQuantity
-    };
-  });
+    // Calculate available inventory
+    const productsData = getProducts();
+    const stockInData = getStockIn();
+    
+    const available = productsData.map(product => {
+      const stockForProduct = stockInData.filter(stock => stock.productId === product.id);
+      const totalQuantity = stockForProduct.reduce((sum, item) => sum + item.quantity, 0);
+      
+      const soldQuantity = salesData
+        .filter(sale => sale.productId === product.id)
+        .reduce((sum, sale) => sum + sale.quantity, 0);
+      
+      return {
+        ...product,
+        availableQuantity: totalQuantity - soldQuantity
+      };
+    });
+    
+    setAvailableProducts(available);
+  }, []);
 
   const handleSaleChange = (field: string, value: string) => {
     if (field === 'productId') {
-      const selectedProduct = mockProducts.find(p => p.id === parseInt(value));
+      const selectedProduct = availableProducts.find(p => p.id === parseInt(value));
       setNewSale({
         ...newSale,
         productId: parseInt(value),
@@ -55,16 +69,33 @@ const SalesManagement = () => {
       return;
     }
 
-    // In a real app, this would be an API call
+    // Add new sale to localStorage
+    const salesData = getSales();
     const saleWithId = {
-      id: Math.max(...sales.map(s => s.id || 0), 0) + 1,
+      id: salesData.length > 0 ? Math.max(...salesData.map(s => s.id)) + 1 : 1,
       ...newSale,
       totalAmount: newSale.quantity * newSale.saleUnitPrice,
       productName: selectedProduct?.productName
     };
     
-    setSales([...sales, saleWithId]);
+    const updatedSales = [...salesData, saleWithId];
+    saveSales(updatedSales);
+    setSales(updatedSales);
+    
+    // Update available products
+    const updatedAvailableProducts = availableProducts.map(product => {
+      if (product.id === newSale.productId) {
+        return {
+          ...product,
+          availableQuantity: product.availableQuantity - newSale.quantity
+        };
+      }
+      return product;
+    });
+    
+    setAvailableProducts(updatedAvailableProducts);
     setMessage({ text: "Sale recorded successfully", type: "success" });
+    toast.success("Sale recorded successfully");
     
     // Reset form
     setNewSale({

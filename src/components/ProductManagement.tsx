@@ -1,15 +1,15 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockProducts } from "@/data/mockData";
+import { getProducts, saveProducts } from "@/data/mockData";
+import { toast } from "sonner";
 
 interface ProductManagementProps {
   isOwner: boolean;
 }
 
 const ProductManagement = ({ isOwner }: ProductManagementProps) => {
-  const [products, setProducts] = useState([...mockProducts]);
+  const [products, setProducts] = useState<any[]>([]);
   const [newProduct, setNewProduct] = useState({
     productName: "",
     buyUnitPrice: 0,
@@ -18,6 +18,11 @@ const ProductManagement = ({ isOwner }: ProductManagementProps) => {
   const [editMode, setEditMode] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [message, setMessage] = useState({ text: "", type: "" });
+
+  // Load products from localStorage
+  useEffect(() => {
+    setProducts(getProducts());
+  }, []);
 
   const handleProductChange = (field: string, value: string) => {
     setNewProduct({
@@ -36,7 +41,7 @@ const ProductManagement = ({ isOwner }: ProductManagementProps) => {
       return;
     }
 
-    // In a real app, this would be an API call
+    // Update products in state and localStorage
     if (editMode && editingId) {
       // Update existing product
       const updatedProducts = products.map(product =>
@@ -45,7 +50,9 @@ const ProductManagement = ({ isOwner }: ProductManagementProps) => {
           : product
       );
       setProducts(updatedProducts);
+      saveProducts(updatedProducts);
       setMessage({ text: "Product updated successfully", type: "success" });
+      toast.success("Product updated successfully");
       setEditMode(false);
       setEditingId(null);
     } else {
@@ -54,8 +61,11 @@ const ProductManagement = ({ isOwner }: ProductManagementProps) => {
         id: Math.max(...products.map(p => p.id), 0) + 1,
         ...newProduct
       };
-      setProducts([...products, newProductWithId]);
+      const updatedProducts = [...products, newProductWithId];
+      setProducts(updatedProducts);
+      saveProducts(updatedProducts);
       setMessage({ text: "Product added successfully", type: "success" });
+      toast.success("Product added successfully");
     }
 
     // Reset form
@@ -75,7 +85,9 @@ const ProductManagement = ({ isOwner }: ProductManagementProps) => {
   const handleDelete = (id: number) => {
     const updatedProducts = products.filter(product => product.id !== id);
     setProducts(updatedProducts);
+    saveProducts(updatedProducts);
     setMessage({ text: "Product deleted successfully", type: "success" });
+    toast.success("Product deleted successfully");
   };
 
   const cancelEdit = () => {

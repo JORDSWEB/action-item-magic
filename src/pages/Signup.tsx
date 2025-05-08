@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { mockUsers } from "@/data/mockData";
+import { getUsers, addUser } from "@/data/mockData";
 import { toast } from "sonner";
 
 const Signup = () => {
@@ -25,14 +25,15 @@ const Signup = () => {
     }
 
     // Check if username already exists
-    const existingUser = mockUsers.find((u) => u.username === username);
+    const existingUser = getUsers().find((u: any) => u.username === username);
     if (existingUser) {
       setError("Username already exists");
       return;
     }
 
-    // In a real app, we would call an API to create a new user
-    // For now, we'll just show a success message and redirect
+    // Create a new user in localStorage
+    addUser(username, password, userType);
+    
     toast.success("Account created successfully! Please login.");
     navigate("/");
   };

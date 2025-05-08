@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockUsers } from "@/data/mockData";
+import { getUsers } from "@/data/mockData";
 import { Link } from "react-router-dom";
 
 interface LoginFormProps {
@@ -18,9 +18,9 @@ const LoginForm = ({ onLogin }: LoginFormProps) => {
     e.preventDefault();
     setError("");
 
-    // Find user in mock data
-    const user = mockUsers.find(
-      (u) => u.username === username && u.password === password
+    // Find user in localStorage data
+    const user = getUsers().find(
+      (u: any) => u.username === username && u.password === password
     );
 
     if (user) {

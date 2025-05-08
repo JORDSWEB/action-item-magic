@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockProducts, mockStockIn } from "@/data/mockData";
+import { getProducts, getStockIn, saveStockIn } from "@/data/mockData";
+import { toast } from "sonner";
 
 interface InventoryManagementProps {
   isOwner: boolean;
@@ -16,11 +16,17 @@ const InventoryManagement = ({ isOwner }: InventoryManagementProps) => {
     unitPrice: 0,
   });
   const [message, setMessage] = useState({ text: "", type: "" });
+  const [products, setProducts] = useState<any[]>([]);
 
-  // Calculate inventory from stockIn and stockOut
+  // Load data from localStorage
   useEffect(() => {
-    const inventoryData = mockProducts.map(product => {
-      const stockForProduct = mockStockIn.filter(stock => stock.productId === product.id);
+    const productsData = getProducts();
+    setProducts(productsData);
+    
+    // Calculate inventory from stockIn
+    const stockInData = getStockIn();
+    const inventoryData = productsData.map(product => {
+      const stockForProduct = stockInData.filter(stock => stock.productId === product.id);
       const totalQuantity = stockForProduct.reduce((sum, item) => sum + item.quantity, 0);
       
       return {
@@ -47,11 +53,18 @@ const InventoryManagement = ({ isOwner }: InventoryManagementProps) => {
       return;
     }
 
-    // In a real app, this would be an API call
-    setMessage({ text: "Stock added successfully", type: "success" });
+    // Add new stock to localStorage
+    const stockInData = getStockIn();
+    const newStockItem = {
+      id: Math.max(...stockInData.map(item => item.id), 0) + 1,
+      productId: newStock.productId,
+      quantity: newStock.quantity,
+      unitPrice: newStock.unitPrice,
+      date: new Date().toISOString().split('T')[0]
+    };
     
-    // Reset form
-    setNewStock({ productId: 0, quantity: 0, unitPrice: 0 });
+    const updatedStockIn = [...stockInData, newStockItem];
+    saveStockIn(updatedStockIn);
     
     // Update inventory state
     const updatedInventory = [...inventory];
@@ -60,6 +73,12 @@ const InventoryManagement = ({ isOwner }: InventoryManagementProps) => {
       updatedInventory[productIndex].totalQuantity += newStock.quantity;
       setInventory(updatedInventory);
     }
+    
+    setMessage({ text: "Stock added successfully", type: "success" });
+    toast.success("Stock added successfully");
+    
+    // Reset form
+    setNewStock({ productId: 0, quantity: 0, unitPrice: 0 });
   };
 
   return (
@@ -109,7 +128,7 @@ const InventoryManagement = ({ isOwner }: InventoryManagementProps) => {
               onChange={(e) => handleStockInChange('productId', e.target.value)}
             >
               <option value={0}>Select Product</option>
-              {mockProducts.map(product => (
+              {products.map(product => (
                 <option key={product.id} value={product.id}>
                   {product.productName}
                 </option>
