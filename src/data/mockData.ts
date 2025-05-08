@@ -74,3 +74,16 @@ export const mockStockIn = [
     date: "2025-05-02",
   },
 ];
+
+// Helper function to add a new user (for signup functionality)
+export const addUser = (username: string, password: string, userType: string) => {
+  const newId = mockUsers.length > 0 ? Math.max(...mockUsers.map(user => user.id)) + 1 : 1;
+  const newUser = {
+    id: newId,
+    username,
+    password,
+    userType,
+  };
+  mockUsers.push(newUser);
+  return newUser;
+};

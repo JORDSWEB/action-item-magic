@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { mockUsers } from "@/data/mockData";
+import { Link } from "react-router-dom";
 
 interface LoginFormProps {
   onLogin: (user: { id: number; username: string; userType: string }) => void;
@@ -68,6 +69,14 @@ const LoginForm = ({ onLogin }: LoginFormProps) => {
       <Button type="submit" className="w-full">
         Login
       </Button>
+      <div className="text-center mt-4">
+        <p className="text-sm text-gray-600">
+          Don't have an account?{" "}
+          <Link to="/signup" className="text-blue-600 hover:underline">
+            Sign up
+          </Link>
+        </p>
+      </div>
     </form>
   );
 };
